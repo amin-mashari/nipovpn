@@ -1,0 +1,11 @@
+version: '3.8'
+services:
+  nipovpn:
+    build: .
+    network_mode: "host"
+    volumes:
+      - ./nipovpn/etc/nipovpn/config.yaml:/etc/nipovpn/config.yaml:ro
+      - ./nipovpn/var/log/nipovpn:/var/log/nipovpn
+    restart: unless-stopped
+    # Run as root to allow binding low ports (80/443) when using host network
+    # If you want to run as non-root, adjust the listen ports to >1024
