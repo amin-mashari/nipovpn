@@ -33,15 +33,13 @@ jobs:
       - name: Prepare tags
         id: prepare
         run: |
-          ref_name="${GITHUB_REF#refs/heads/}"
-          safe_ref="${ref_name//\//-}"
-          tags="ghcr.io/${GITHUB_REPOSITORY_OWNER}/nipovpn:${safe_ref}"
-          tags="$tags\nghcr.io/${GITHUB_REPOSITORY_OWNER}/nipovpn:${GITHUB_SHA}"
+          short_sha=$(echo "${GITHUB_SHA}" | cut -c1-7)
+          tags="ghcr.io/${GITHUB_REPOSITORY_OWNER}/nipovpn:${short_sha}"
           if [ "${GITHUB_REF}" = "refs/heads/main" ]; then
-            tags="$tags\nghcr.io/${GITHUB_REPOSITORY_OWNER}/nipovpn:latest"
+            tags=$(printf "%s\nghcr.io/%s/nipovpn:latest" "$tags" "${GITHUB_REPOSITORY_OWNER}")
           fi
           echo "tags<<EOF" >> $GITHUB_OUTPUT
-          echo "$tags" >> $GITHUB_OUTPUT
+          printf "%s\n" "$tags" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Build and push image
