@@ -1,20 +1,20 @@
-name: Build and Release Package - dev
+name: Build and Release Package - Main
 
 on:
   push:
     branches:
-      - dev
+      - main
     paths:
       - 'core/src/**'
       - 'core/**'
       - 'nipovpn/**'
-      - '.github/workflows/debian-dev.yml'
+      - '.github/workflows/debian-main.yml'
 
 permissions:
   contents: write
 
 env:
-  PACKAGE_VERSION: 0.1.${{ github.run_number }}
+  PACKAGE_VERSION: 1.1.57
 
 jobs:
   build:
@@ -89,7 +89,7 @@ jobs:
 
       - name: Build Debian package
         run: |
-          PACKAGE_FILE="nipovpn_dev_${PACKAGE_VERSION}_${{ matrix.arch }}.deb"
+          PACKAGE_FILE="nipovpn_${PACKAGE_VERSION}_${{ matrix.arch }}.deb"
 
           rm -rf package-root
           cp -a nipovpn package-root
@@ -116,15 +116,15 @@ jobs:
 
       - name: Show Debian package information
         run: |
-          PACKAGE_FILE="nipovpn_dev_${PACKAGE_VERSION}_${{ matrix.arch }}.deb"
+          PACKAGE_FILE="nipovpn_${PACKAGE_VERSION}_${{ matrix.arch }}.deb"
           dpkg -I "build/${PACKAGE_FILE}"
           dpkg -c "build/${PACKAGE_FILE}"
 
       - name: Upload Debian package artifact
         uses: actions/upload-artifact@v4
         with:
-          name: nipovpn-dev-deb-${{ matrix.arch }}
-          path: build/nipovpn_dev_${{ env.PACKAGE_VERSION }}_${{ matrix.arch }}.deb
+          name: nipovpn-deb-${{ matrix.arch }}
+          path: build/nipovpn_${{ env.PACKAGE_VERSION }}_${{ matrix.arch }}.deb
 
   build-termux:
     runs-on: ubuntu-24.04
@@ -257,15 +257,15 @@ jobs:
             exit 1
           fi
 
-          cp "$TERMUX_DEB" "out/nipovpn_dev_${PACKAGE_VERSION}_termux_aarch64.deb"
+          cp "$TERMUX_DEB" "out/nipovpn_${PACKAGE_VERSION}_termux_aarch64.deb"
 
           ls -lah out/
 
       - name: Upload Termux package artifact
         uses: actions/upload-artifact@v4
         with:
-          name: nipovpn-dev-termux-aarch64
-          path: out/nipovpn_dev_${{ env.PACKAGE_VERSION }}_termux_aarch64.deb
+          name: nipovpn-termux-aarch64
+          path: out/nipovpn_${{ env.PACKAGE_VERSION }}_termux_aarch64.deb
 
   release:
     needs:
@@ -277,7 +277,7 @@ jobs:
       - name: Download package artifacts
         uses: actions/download-artifact@v4
         with:
-          pattern: nipovpn-dev-*
+          pattern: nipovpn-*
           merge-multiple: true
           path: ./
 
@@ -285,15 +285,15 @@ jobs:
         run: |
           ls -lah
 
-      - name: Create dev GitHub Release
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: dev-v${{ env.PACKAGE_VERSION }}
-          name: dev Version v${{ env.PACKAGE_VERSION }}
+          tag_name: v${{ env.PACKAGE_VERSION }}
+          name: Version v${{ env.PACKAGE_VERSION }}
           prerelease: true
           files: |
-            nipovpn_dev_${{ env.PACKAGE_VERSION }}_amd64.deb
-            nipovpn_dev_${{ env.PACKAGE_VERSION }}_arm64.deb
-            nipovpn_dev_${{ env.PACKAGE_VERSION }}_termux_aarch64.deb
+            nipovpn_${{ env.PACKAGE_VERSION }}_amd64.deb
+            nipovpn_${{ env.PACKAGE_VERSION }}_arm64.deb
+            nipovpn_${{ env.PACKAGE_VERSION }}_termux_aarch64.deb
         env:
           GITHUB_TOKEN: ${{ github.token }}

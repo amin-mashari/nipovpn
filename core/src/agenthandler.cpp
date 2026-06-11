@@ -1,21 +1,22 @@
 #include "agenthandler.hpp"
 
 #include <sstream>
+#include <utility>
 
 AgentHandler::AgentHandler(boost::asio::streambuf &readBuffer,
                            boost::asio::streambuf &writeBuffer,
                            const std::shared_ptr<Config> &config,
                            const std::shared_ptr<Log> &log,
-                           const TCPClient::pointer &client,
-                           const std::string &clientConnStr,
+                           TCPClient::pointer client,
+                           std::string clientConnStr,
                            boost::uuids::uuid uuid)
     : config_(config),
       log_(log),
-      client_(client),
+      client_(std::move(client)),
       readBuffer_(readBuffer),
       writeBuffer_(writeBuffer),
       request_(HTTP::create(config, log, readBuffer, uuid)),
-      clientConnStr_(clientConnStr),
+      clientConnStr_(std::move(clientConnStr)),
       uuid_(uuid) {
     end_ = false;
     connect_ = false;
@@ -37,7 +38,7 @@ void AgentHandler::handle() {
     if (request_->parsedHttpRequest().target().length() > 0) {
         log_->write("[" + to_string(uuid_) + "] [FORWARD] [SRC " + clientConnStr_ + "] [DST " +
                             std::string(request_->parsedHttpRequest().target()) + "]",
-                    Log::Level::INFO);
+                    Log::Level::TRACE);
     }
 
     if (config_->general().tlsEnable && !client_->tlsEnabled()) {
@@ -59,6 +60,11 @@ void AgentHandler::handle() {
                         Log::Level::INFO);
             client_->socketShutdown();
             return;
+        } else {
+            log_->write("[" + to_string(uuid_) + "] [CONNECT] [SRC " +
+                                clientConnStr_ + "] [DST " + config_->agent().serverIp + ":" +
+                                std::to_string(config_->agent().serverPort) + "]",
+                        Log::Level::INFO);
         }
 
         if (client_->tlsEnabled() && !client_->doHandshakeClient()) {
